@@ -8,8 +8,17 @@ public class ImageConversionTests : XCTestCase {
             XCTFail("Could not create pixel buffer")
             return
         }
-        let predictionResult = try Inceptionv3().prediction(image: pixelBuffer)
-        XCTAssertEqual(predictionResult.classLabel,"African elephant, Loxodonta africana")
+        let model = Inceptionv3()
+        var classLabel = ""
+        self.measure({
+            do {
+                let predictionResult = try model.prediction(image: pixelBuffer)
+                classLabel = predictionResult.classLabel
+            } catch let e {
+                XCTFail("Exception thrown during prediction: \(e)")
+            }
+        })
+        XCTAssertEqual(classLabel,"African elephant, Loxodonta africana")
     }
 
     func testBluetick() throws {
@@ -18,8 +27,17 @@ public class ImageConversionTests : XCTestCase {
             XCTFail("Could not create pixel buffer")
             return
         }
-        let predictionResult = try VGG16().prediction(image: pixelBuffer)
-        XCTAssertEqual(predictionResult.classLabel,"bluetick")
+        let model = VGG16()
+        var classLabel = ""
+        self.measure({
+            do {
+                let predictionResult = try model.prediction(image: pixelBuffer)
+                classLabel = predictionResult.classLabel
+            } catch let e {
+                XCTFail("Exception thrown during prediction: \(e)")
+            }
+        })
+        XCTAssertEqual(classLabel,"bluetick")
     }
 
 }
