@@ -3,5 +3,6 @@
     <pages>
         <page name='Test InceptionV3'/>
         <page name='Test VGG16'/>
+        <page name='Unit Tests'/>
     </pages>
 </playground>
