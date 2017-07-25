@@ -120,15 +120,21 @@ class ViewController : UIViewController {
             
             image.draw(in: CGRect(origin: CGPoint(x:0,y:0), size: imageSize))
             
-            // Translate to cartesian
             currentContext.translateBy(x: 0, y: imageSize.height)
             currentContext.scaleBy(x: 1.0, y: -1.0)
-
             
             let faceBoxColor = UIColor.green
             let faceBoxLine = CGFloat(4)
+            
             let faceContourColor  = UIColor.yellow
             let faceContourLine = CGFloat(3)
+            
+            let eyebrowColor = UIColor.blue
+            let eyebrowLine = CGFloat(3)
+            
+            let eyeColor = UIColor.cyan
+            let eyeLine = CGFloat(3)
+            
             
             for observation in request.results! {
                 if let faceObservation = observation as? VNFaceObservation {
@@ -136,25 +142,31 @@ class ViewController : UIViewController {
                     let boundingBox = faceObservation.boundingBox
                     let rectBox = CGRect(x: boundingBox.origin.x * imageSize.width, y: boundingBox.origin.y * imageSize.height,width:boundingBox.size.width * imageSize.width, height: boundingBox.size.height * imageSize.height)
                     print("boundingBox: \(boundingBox) rectBox: \(rectBox)")
+
                     currentContext.setStrokeColor(faceBoxColor.cgColor)
                     currentContext.setLineWidth(4)
                     currentContext.stroke(rectBox)
-                    
-                    if let faceContour = faceObservation.landmarks?.faceContour {
-                        let pointCount = faceContour.pointCount
-                        
-                        if let points = faceContour.points {
-                            let contourPath = UIBezierPath(baseRect: rectBox,relativePoints: UnsafeBufferPointer(start: points, count: pointCount))
-                            print("path: \(contourPath)")
-                            currentContext.setStrokeColor(faceContourColor.cgColor)
-                            contourPath.lineWidth = faceContourLine
-                            contourPath.stroke()
+
+                    func draw(faceRegion:VNFaceLandmarkRegion2D?,color:UIColor,lineWidth:CGFloat){
+                        guard   let region = faceRegion,
+                            let points = region.points else {
+                                return
                         }
+                        let path = UIBezierPath(baseRect: rectBox,relativePoints: UnsafeBufferPointer(start: points, count: region.pointCount))
+                        color.setStroke()
+                        path.lineWidth = lineWidth
+                        path.stroke()
                     }
                     
+                    draw(faceRegion: faceObservation.landmarks?.faceContour, color: faceContourColor, lineWidth: faceContourLine)
+                    
+                    draw(faceRegion: faceObservation.landmarks?.leftEye, color: eyeColor, lineWidth: eyeLine)
+                    draw(faceRegion: faceObservation.landmarks?.rightEye, color: eyeColor, lineWidth: eyeLine)
+
+                    draw(faceRegion: faceObservation.landmarks?.leftEyebrow, color: eyebrowColor, lineWidth: eyeLine)
+                    draw(faceRegion: faceObservation.landmarks?.rightEyebrow, color: eyebrowColor, lineWidth: eyeLine)
                 }
             }
-            
         }
         
         faceFeaturesRequest.preferBackgroundProcessing = true
