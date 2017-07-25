@@ -140,72 +140,79 @@ class ViewController : UIViewController,UIScrollViewDelegate {
     @IBAction func detectFaceLandmarks() throws {
         print("detect face landmarks")
         let image = mainImage
-        let faceFeaturesRequest = VNDetectFaceLandmarksRequest { (request : VNRequest, error : Error?) in
-            
-            let imageSize = image.size
-            UIGraphicsBeginImageContextWithOptions(imageSize, true, 1)
-            let currentContext = UIGraphicsGetCurrentContext()!
-            defer {
-                let resultImage = UIGraphicsGetImageFromCurrentImageContext()
-                UIGraphicsEndImageContext()
-                DispatchQueue.main.async {
-                    self.mainImageView.image = resultImage
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+            let faceFeaturesRequest = VNDetectFaceLandmarksRequest { (request : VNRequest, error : Error?) in
+                
+                let imageSize = image.size
+                UIGraphicsBeginImageContextWithOptions(imageSize, true, 1)
+                let currentContext = UIGraphicsGetCurrentContext()!
+                defer {
+                    let resultImage = UIGraphicsGetImageFromCurrentImageContext()
+                    UIGraphicsEndImageContext()
+                    DispatchQueue.main.async {
+                        self.mainImageView.image = resultImage
+                    }
+                }
+                
+                image.draw(in: CGRect(origin: CGPoint(x:0,y:0), size: imageSize))
+                
+                currentContext.translateBy(x: 0, y: imageSize.height)
+                currentContext.scaleBy(x: 1.0, y: -1.0)
+                
+                let faceBoxColor = UIColor.green
+                let faceBoxLine = CGFloat(4)
+                
+                let faceContourColor  = UIColor.yellow
+                let faceContourLine = CGFloat(3)
+                
+                let eyebrowColor = UIColor.blue
+                let eyebrowLine = CGFloat(3)
+                
+                let eyeColor = UIColor.cyan
+                let eyeLine = CGFloat(3)
+                
+                for observation in request.results! {
+                    if let faceObservation = observation as? VNFaceObservation {
+                        
+                        let boundingBox = faceObservation.boundingBox
+                        let rectBox = CGRect(x: boundingBox.origin.x * imageSize.width, y: boundingBox.origin.y * imageSize.height,width:boundingBox.size.width * imageSize.width, height: boundingBox.size.height * imageSize.height)
+                        print("boundingBox: \(boundingBox) rectBox: \(rectBox)")
+                        
+                        currentContext.setStrokeColor(faceBoxColor.cgColor)
+                        currentContext.setLineWidth(4)
+                        currentContext.stroke(rectBox)
+                        
+                        func draw(faceRegion:VNFaceLandmarkRegion2D?,color:UIColor,lineWidth:CGFloat){
+                            guard   let region = faceRegion,
+                                let points = region.points else {
+                                    return
+                            }
+                            let path = UIBezierPath(baseRect: rectBox,relativePoints: UnsafeBufferPointer(start: points, count: region.pointCount))
+                            color.setStroke()
+                            path.lineWidth = lineWidth
+                            path.stroke()
+                        }
+                        
+                        draw(faceRegion: faceObservation.landmarks?.faceContour, color: faceContourColor, lineWidth: faceContourLine)
+                        
+                        draw(faceRegion: faceObservation.landmarks?.leftEye, color: eyeColor, lineWidth: eyeLine)
+                        draw(faceRegion: faceObservation.landmarks?.rightEye, color: eyeColor, lineWidth: eyeLine)
+                        
+                        draw(faceRegion: faceObservation.landmarks?.leftEyebrow, color: eyebrowColor, lineWidth: eyeLine)
+                        draw(faceRegion: faceObservation.landmarks?.rightEyebrow, color: eyebrowColor, lineWidth: eyeLine)
+                    }
                 }
             }
             
-            image.draw(in: CGRect(origin: CGPoint(x:0,y:0), size: imageSize))
-            
-            currentContext.translateBy(x: 0, y: imageSize.height)
-            currentContext.scaleBy(x: 1.0, y: -1.0)
-            
-            let faceBoxColor = UIColor.green
-            let faceBoxLine = CGFloat(4)
-            
-            let faceContourColor  = UIColor.yellow
-            let faceContourLine = CGFloat(3)
-            
-            let eyebrowColor = UIColor.blue
-            let eyebrowLine = CGFloat(3)
-            
-            let eyeColor = UIColor.cyan
-            let eyeLine = CGFloat(3)
-            
-            for observation in request.results! {
-                if let faceObservation = observation as? VNFaceObservation {
-                    
-                    let boundingBox = faceObservation.boundingBox
-                    let rectBox = CGRect(x: boundingBox.origin.x * imageSize.width, y: boundingBox.origin.y * imageSize.height,width:boundingBox.size.width * imageSize.width, height: boundingBox.size.height * imageSize.height)
-                    print("boundingBox: \(boundingBox) rectBox: \(rectBox)")
-
-                    currentContext.setStrokeColor(faceBoxColor.cgColor)
-                    currentContext.setLineWidth(4)
-                    currentContext.stroke(rectBox)
-
-                    func draw(faceRegion:VNFaceLandmarkRegion2D?,color:UIColor,lineWidth:CGFloat){
-                        guard   let region = faceRegion,
-                            let points = region.points else {
-                                return
-                        }
-                        let path = UIBezierPath(baseRect: rectBox,relativePoints: UnsafeBufferPointer(start: points, count: region.pointCount))
-                        color.setStroke()
-                        path.lineWidth = lineWidth
-                        path.stroke()
-                    }
-                    
-                    draw(faceRegion: faceObservation.landmarks?.faceContour, color: faceContourColor, lineWidth: faceContourLine)
-                    
-                    draw(faceRegion: faceObservation.landmarks?.leftEye, color: eyeColor, lineWidth: eyeLine)
-                    draw(faceRegion: faceObservation.landmarks?.rightEye, color: eyeColor, lineWidth: eyeLine)
-
-                    draw(faceRegion: faceObservation.landmarks?.leftEyebrow, color: eyebrowColor, lineWidth: eyeLine)
-                    draw(faceRegion: faceObservation.landmarks?.rightEyebrow, color: eyebrowColor, lineWidth: eyeLine)
-                }
+            faceFeaturesRequest.preferBackgroundProcessing = true
+            let requestHandler = VNImageRequestHandler(cgImage:image.cgImage! , options: [:])
+            do {
+                try requestHandler.perform([faceFeaturesRequest])
+            } catch let e as NSError {
+                print("Error during request: \(e)")
             }
         }
-        
-        faceFeaturesRequest.preferBackgroundProcessing = true
-        let requestHandler = VNImageRequestHandler(cgImage:image.cgImage! , options: [:])
-        try requestHandler.perform([faceFeaturesRequest])
     }
 
     @IBAction func maskFaces() {
