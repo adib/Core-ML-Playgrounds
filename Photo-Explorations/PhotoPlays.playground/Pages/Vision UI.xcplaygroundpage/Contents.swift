@@ -126,20 +126,38 @@ class ViewController : UIViewController {
 
             
             let faceBoxColor = UIColor.green
-            currentContext.setStrokeColor(faceBoxColor.cgColor)
-            currentContext.setLineWidth(4)
+            let faceBoxLine = CGFloat(4)
+            let faceContourColor  = UIColor.yellow
+            let faceContourLine = CGFloat(3)
             
             for observation in request.results! {
                 if let faceObservation = observation as? VNFaceObservation {
+                    
                     let boundingBox = faceObservation.boundingBox
                     let rectBox = CGRect(x: boundingBox.origin.x * imageSize.width, y: boundingBox.origin.y * imageSize.height,width:boundingBox.size.width * imageSize.width, height: boundingBox.size.height * imageSize.height)
                     print("boundingBox: \(boundingBox) rectBox: \(rectBox)")
+                    currentContext.setStrokeColor(faceBoxColor.cgColor)
+                    currentContext.setLineWidth(4)
                     currentContext.stroke(rectBox)
+                    
+                    if let faceContour = faceObservation.landmarks?.faceContour {
+                        let pointCount = faceContour.pointCount
+                        
+                        if let points = faceContour.points {
+                            let contourPath = UIBezierPath(baseRect: rectBox,relativePoints: UnsafeBufferPointer(start: points, count: pointCount))
+                            print("path: \(contourPath)")
+                            currentContext.setStrokeColor(faceContourColor.cgColor)
+                            contourPath.lineWidth = faceContourLine
+                            contourPath.stroke()
+                        }
+                    }
+                    
                 }
             }
             
         }
         
+        faceFeaturesRequest.preferBackgroundProcessing = true
         let requestHandler = VNImageRequestHandler(cgImage:image.cgImage! , options: [:])
         try requestHandler.perform([faceFeaturesRequest])
     }
@@ -147,7 +165,26 @@ class ViewController : UIViewController {
     @IBAction func maskFaces() {
         print("Mask faces")
     }
-    
+}
+
+
+extension UIBezierPath {
+    convenience init(baseRect: CGRect,relativePoints: UnsafeBufferPointer<vector_float2>) {
+        self.init()
+        let pointCount = relativePoints.count
+        for i in 0..<pointCount {
+            let curPoint = relativePoints[i]
+            let curPos = CGPoint(x: baseRect.minX + CGFloat(curPoint.x) * baseRect.width, y: baseRect.minY + CGFloat(curPoint.y) * baseRect.height)
+            
+            //let firstPos : CGPoint
+            if i == 0 {
+                // first point
+                self.move(to: curPos)
+            } else {
+                self.addLine(to: curPos)
+            }
+        }
+    }
 }
 
 let viewController = ViewController()
