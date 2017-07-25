@@ -7,15 +7,38 @@ import UIKit
 import Vision
 import PlaygroundSupport
 
-class ViewController : UIViewController {
+class ViewController : UIViewController,UIScrollViewDelegate {
     
     var mainImage = #imageLiteral(resourceName: "pexels-photo-109919.jpeg")
+    
+    lazy var mainScrollView = {
+        () -> UIScrollView in
+        let scrollView = UIScrollView(frame: CGRect(x: 0, y: 0, width: 320, height: 320))
+        scrollView.minimumZoomScale = 0.5
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.delegate = self
+        
+        let imageView = self.mainImageView
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(imageView)
+        
+        let viewBindings = [
+            "imageView" : imageView
+        ]
+        scrollView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|[imageView]|", options: [], metrics: nil, views: viewBindings))
+        scrollView.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|[imageView]|", options: [], metrics: nil, views: viewBindings))
+        scrollView.backgroundColor = .green
+
+        return scrollView
+    }()
     
     lazy var mainImageView = {
         () -> UIImageView in
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        imageView.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+
         return imageView
     }()
     
@@ -44,7 +67,7 @@ class ViewController : UIViewController {
         buttonBar.distribution = .fillEqually
         buttonBar.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
         
-        let rootStackView = UIStackView(arrangedSubviews:[mainImageView,buttonBar])
+        let rootStackView = UIStackView(arrangedSubviews:[mainScrollView,buttonBar])
         rootStackView.axis = .vertical
         rootStackView.distribution = .fill
         
@@ -55,9 +78,21 @@ class ViewController : UIViewController {
         super.viewDidLoad()
     }
     
+    // MARK: UIScrollViewDelegate
+    
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        if scrollView === mainScrollView {
+            return mainImageView
+        }
+        return nil
+    }
+    
+    // MARK: - Actions
+    
     @IBAction func resetImage() {
         print("Reset image")
         mainImageView.image = mainImage
+        mainScrollView.setNeedsLayout()
     }
     
     @IBAction func detectFaceRectangles() throws {
@@ -134,7 +169,6 @@ class ViewController : UIViewController {
             
             let eyeColor = UIColor.cyan
             let eyeLine = CGFloat(3)
-            
             
             for observation in request.results! {
                 if let faceObservation = observation as? VNFaceObservation {
