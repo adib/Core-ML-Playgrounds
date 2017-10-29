@@ -45,20 +45,20 @@ class ViewController : UIViewController,UIScrollViewDelegate {
     override func loadView() {
         mainImageView.image = mainImage
         
-        let resetButton = UIButton(type: .plain)
+        let resetButton = UIButton(type: .system)
         resetButton.addTarget(self, action: #selector(resetImage), for: .primaryActionTriggered)
         resetButton.setTitle(NSLocalizedString("Reset", comment: "Reset Button"), for: .normal)
 
-        let faceRectanglesButton = UIButton(type: .plain)
+        let faceRectanglesButton = UIButton(type: .system)
         faceRectanglesButton.addTarget(self, action: #selector(detectFaceRectangles), for: .primaryActionTriggered)
         faceRectanglesButton.setTitle(NSLocalizedString("Face Rectangles", comment: "Recognize Button"), for: .normal)
 
         
-        let recognizeButton = UIButton(type: .plain)
+        let recognizeButton = UIButton(type: .system)
         recognizeButton.addTarget(self, action: #selector(detectFaceLandmarks), for: .primaryActionTriggered)
         recognizeButton.setTitle(NSLocalizedString("Face Landmarks", comment: "Recognize Button"), for: .normal)
         
-        let maskButton = UIButton(type: .plain)
+        let maskButton = UIButton(type: .system)
         maskButton.addTarget(self, action: #selector(maskFaces), for: .primaryActionTriggered)
         maskButton.setTitle(NSLocalizedString("Mask", comment: "Mask Button"), for: .normal)
         
@@ -184,10 +184,10 @@ class ViewController : UIViewController,UIScrollViewDelegate {
                         currentContext.stroke(rectBox)
                         
                         func draw(faceRegion:VNFaceLandmarkRegion2D?,color:UIColor,lineWidth:CGFloat){
-                            guard   let region = faceRegion,
-                                let points = region.points else {
+                            guard   let region = faceRegion else {
                                     return
                             }
+                            let points = region.normalizedPoints
                             let path = UIBezierPath(baseRect: rectBox,relativePoints: UnsafeBufferPointer(start: points, count: region.pointCount))
                             color.setStroke()
                             path.lineWidth = lineWidth
@@ -220,9 +220,12 @@ class ViewController : UIViewController,UIScrollViewDelegate {
     }
 }
 
+struct ImageModifier {
+    var buttonTitle  = ""
+}
 
 extension UIBezierPath {
-    convenience init(baseRect: CGRect,relativePoints: UnsafeBufferPointer<vector_float2>) {
+    convenience init(baseRect: CGRect,relativePoints: UnsafeBufferPointer<CGPoint>) {
         self.init()
         let pointCount = relativePoints.count
         for i in 0..<pointCount {
