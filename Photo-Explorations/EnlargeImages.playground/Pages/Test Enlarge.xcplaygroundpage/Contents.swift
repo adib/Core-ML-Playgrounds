@@ -9,6 +9,7 @@ import Foundation
 import AppKit
 
 func CGImage(nsImage: NSImage) -> CGImage {
+    let startTime = Date.timeIntervalSinceReferenceDate
     let imageSize = nsImage.size
     let width = Int(ceil(imageSize.width))
     let height = Int(ceil(imageSize.height));
@@ -26,6 +27,8 @@ func CGImage(nsImage: NSImage) -> CGImage {
     NSGraphicsContext.current = graphicsContext
     nsImage.draw(in: NSRect(x: 0, y: 0, width: width, height: height))
     let cgImage = bitmapContext.makeImage()!
+    let endTime = Date.timeIntervalSinceReferenceDate
+    print("convert-nsimage-to-cgimage: ",endTime - startTime)
     return cgImage
 }
 
@@ -35,12 +38,12 @@ extension NSImage {
     }
 }
 
-let image = #imageLiteral(resourceName: "Volcanes-De-Lodo-300px.jpg")
+let image = #imageLiteral(resourceName: "Hollister_Municipal_Airport_photo_D_Ramey_Logan.jpg")
 let cgImage = CGImage(nsImage: image)
 NSImage(cgImage:cgImage)
 
 let model = Model.photo_noise1_scale2x
 
-let enlargedImage = cgImage.run(model: model,scale: 2)!
+let enlargedImage = cgImage.run(model: model,scale: 2 )!
 let resultImage = NSImage(cgImage: enlargedImage)
 

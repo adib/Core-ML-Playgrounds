@@ -16,6 +16,8 @@ extension CGImage {
     ///
     /// - Returns: Float array of rgb values
     public func expand() -> [Float] {
+        let startTime = Date.timeIntervalSinceReferenceDate
+
         let width = Int(self.width)
         let height = Int(self.height)
         
@@ -167,6 +169,10 @@ extension CGImage {
                 arr[yy * exwidth + x + exwidth * exheight * 2] = fb
             }
         }
+        
+        let endTime = Date.timeIntervalSinceReferenceDate
+        print("cgimage-expand: ",endTime - startTime)
+
         return arr
     }
     

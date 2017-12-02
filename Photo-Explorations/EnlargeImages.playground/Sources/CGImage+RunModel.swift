@@ -21,6 +21,8 @@ let shrink_size = 7
 extension CGImage {
     
     public func run(model: Model, scale: CGFloat = 1) -> CGImage? {
+        let startTime = Date.timeIntervalSinceReferenceDate
+
         let width = Int(self.width)
         let height = Int(self.height)
         switch model {
@@ -48,6 +50,8 @@ extension CGImage {
         let bufferSize = out_block_size * out_block_size * 3
         var imgData = [UInt8].init(repeating: 0, count: out_width * out_height * 3)
         let out_pipeline = BackgroundPipeline<MLMultiArray>("out_pipeline", count: rects.count) { (index, array) in
+            let startTime = Date.timeIntervalSinceReferenceDate
+
             let rect = rects[index]
             let origin_x = Int(rect.origin.x * scale)
             let origin_y = Int(rect.origin.y * scale)
@@ -68,6 +72,10 @@ extension CGImage {
                     }
                 }
             }
+            
+            let endTime = Date.timeIntervalSinceReferenceDate
+            print("pipeline-normalize-data: ",endTime - startTime)
+
         }
         // Prepare for model pipeline
         // Run prediction on each block
@@ -103,6 +111,10 @@ extension CGImage {
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         let bitmapInfo = CGBitmapInfo.byteOrder32Big
         let cgImage = CGImage(width: out_width, height: out_height, bitsPerComponent: 8, bitsPerPixel: 24, bytesPerRow: out_width * 3, space: colorSpace, bitmapInfo: bitmapInfo, provider: dataProvider, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent)
+        
+        let endTime = Date.timeIntervalSinceReferenceDate
+        print("run-model: ",endTime - startTime)
+
         return cgImage
     }
     
