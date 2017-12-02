@@ -81,7 +81,11 @@ extension CGImage {
         // Run prediction on each block
         let mlmodel = model.getMLModel()
         let model_pipeline = BackgroundPipeline<MLMultiArray>("model_pipeline", count: rects.count) { (index, array) in
-            out_pipeline.appendObject(try! mlmodel.prediction(input: array))
+            let startTime = Date.timeIntervalSinceReferenceDate
+            let result = try! mlmodel.prediction(input: array)
+            let endTime = Date.timeIntervalSinceReferenceDate
+            print("pipeline-prediction: ",endTime - startTime)
+            out_pipeline.appendObject(result)
         }
         // Start running model
         let expwidth = Int(self.width) + 2 * shrink_size
