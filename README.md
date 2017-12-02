@@ -2,8 +2,10 @@
 Swift Playgrounds for trying out Core ML models.
 
 
+## Acknowledgments
 
-–––
+### waifu2x-ios
 
-Sasmito Adibowo  
-http://cutecoder.org
+Copyright (c) 2017 imxieyi wez733@live.cn
+
+
